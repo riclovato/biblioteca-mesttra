@@ -1,10 +1,11 @@
 package br.com.mesttra.service;
 
-import br.com.mesttra.dao.AlunoDAO;
-import br.com.mesttra.model.AlunoModel;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import br.com.mesttra.dao.AlunoDAO;
+import br.com.mesttra.model.AlunoModel;
 
 @Service
 public class AlunoService {
@@ -23,6 +24,11 @@ public class AlunoService {
     // BUSCAR POR ID
     public AlunoModel buscarPorId(Integer id) {
         return alunoDAO.buscarPorId(id);
+    }
+
+    // BUSCAR POR NOME
+    public AlunoModel buscarPorNome(String nome) {
+        return alunoDAO.buscarPorNome(nome);
     }
 
     // SALVAR

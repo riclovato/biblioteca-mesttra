@@ -54,6 +54,23 @@ public class AlunoController {
 		  // Retorna o aluno encontrado com status 200 OK
         return ResponseEntity.ok(aluno);
     }
+    
+     // BUSCAR POR NOME
+	 // Anotação para mapear requisições HTTP GET para o método buscar(), ou seja
+	 // quando alguém fizer um GET nessa URL seguida de um número (ex: /alunos/id/1), execute este método
+    @GetMapping("/nome/{nome}")
+    public ResponseEntity<AlunoModel> buscar(@PathVariable("nome") String nome) { //@PathVariable("id") é usado para capturar um valor que vem na URL (no caminho da rota) e colocar esse valor dentro de uma variável do método.
+
+        AlunoModel aluno = service.buscarPorNome(nome);
+
+        if (aluno == null) {
+				// Retorna status 404 Not Found se o aluno não for encontrado
+            return ResponseEntity.notFound().build();
+        }
+
+		  // Retorna o aluno encontrado com status 200 OK
+        return ResponseEntity.ok(aluno);
+    }
 
     // CRIAR
 	 // Anotação para mapear requisições HTTP POST (/alunos/) para o método criar(), ou seja

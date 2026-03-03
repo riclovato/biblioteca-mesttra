@@ -1,12 +1,17 @@
 package br.com.mesttra.dao;
 
-import br.com.mesttra.config.DatabaseConnection;
-import br.com.mesttra.model.AlunoModel;
-import org.springframework.stereotype.Repository;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.springframework.stereotype.Repository;
+
+import br.com.mesttra.config.DatabaseConnection;
+import br.com.mesttra.model.AlunoModel;
 
 @Repository
 public class AlunoDAO {
@@ -45,6 +50,26 @@ public class AlunoDAO {
              PreparedStatement instrucao = conexao.prepareStatement(sql)) {
 
             instrucao.setInt(1, id);
+            try (ResultSet resultado = instrucao.executeQuery()) {
+                if (resultado.next()) {
+                    return mapearResultSetParaAlunoModel(resultado);
+                }
+            }
+        } catch (SQLException erro) {
+            erro.printStackTrace();
+        }
+
+        return null;
+    }
+
+    // BUSCAR POR NOME
+    public AlunoModel buscarPorNome(String nome) {
+        String sql = "SELECT * FROM aluno WHERE nome like ?";
+
+        try (Connection conexao = gerenciadorBancoDados.obterConexao();
+             PreparedStatement instrucao = conexao.prepareStatement(sql)) {
+
+            instrucao.setString(1, "%" + nome + "%");
             try (ResultSet resultado = instrucao.executeQuery()) {
                 if (resultado.next()) {
                     return mapearResultSetParaAlunoModel(resultado);
