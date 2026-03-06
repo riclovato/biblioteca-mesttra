@@ -88,5 +88,18 @@ public class AutorModel {
         this.telefone = telefone;
     }
 
+    @Override
+    public String toString() {
+        return "AutorModel{" +
+                "id=" + id +
+                ", autor='" + autor + '\'' +
+                ", pseudonimo='" + pseudonimo + '\'' +
+                ", nacionalidade='" + nacionalidade + '\'' +
+                ", enderecoWeb='" + enderecoWeb + '\'' +
+                ", email='" + email + '\'' +
+                ", telefone='" + telefone + '\'' +
+                '}';
+    }   
+
     
 }

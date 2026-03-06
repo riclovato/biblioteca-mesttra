@@ -14,19 +14,19 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.com.mesttra.model.AlunoModel;
-import br.com.mesttra.service.AlunoService;
+import br.com.mesttra.model.AutorModel;
+import br.com.mesttra.service.AutorService;
 
 //Anotação que diz ao Spring: esta classe é um controller web REST e seus métodos retornam JSON diretamente
 @RestController
 // Anotação para definir o caminho base (URL base) que o controller vai atender
 // aos requests http.
-@RequestMapping("/alunos")
-public class AlunoController {
+@RequestMapping("/autores")
+public class AutorController {
 
-    private AlunoService service;
+    private AutorService service;
 
-    public AlunoController(AlunoService service) {
+    public AutorController(AutorService service) {
         this.service = service;
     }
 
@@ -34,7 +34,7 @@ public class AlunoController {
     // Anotação para mapear requisições HTTP GET para o método listar(), ou seja
     // quando alguém fizer um GET nessa URL /alunos/, execute este método
     @GetMapping("/")
-    public List<AlunoModel> listar() {
+    public List<AutorModel> listar() {
         return service.listarTodos();
     }
 
@@ -43,20 +43,20 @@ public class AlunoController {
     // quando alguém fizer um GET nessa URL seguida de um número (ex: /alunos/id/1),
     // execute este método
     @GetMapping("/id/{id}")
-    public ResponseEntity<AlunoModel> buscar(@PathVariable("id") Integer id) { // @PathVariable("id") é usado para
+    public ResponseEntity<AutorModel> buscar(@PathVariable("id") Integer id) { // @PathVariable("id") é usado para
                                                                                // capturar um valor que vem na URL (no
                                                                                // caminho da rota) e colocar esse valor
                                                                                // dentro de uma variável do método.
 
-        AlunoModel aluno = service.buscarPorId(id);
+        AutorModel autor = service.buscarPorId(id);
 
-        if (aluno == null) {
-            // Retorna status 404 Not Found se o aluno não for encontrado
+        if (autor == null) {
+            // Retorna status 404 Not Found se o autor não for encontrado
             return ResponseEntity.notFound().build();
         }
 
-        // Retorna o aluno encontrado com status 200 OK
-        return ResponseEntity.ok(aluno);
+        // Retorna o autor encontrado com status 200 OK
+        return ResponseEntity.ok(autor);
     }
 
     // PESQUISAR POR
@@ -71,16 +71,16 @@ public class AlunoController {
 
     // @PathVariable("nome") é usado para capturar um valor que vem na URL (no
     // caminho da rota) e colocar esse valor dentro de uma variável do método.
-    public ResponseEntity<List<AlunoModel>> buscarPorNome(@PathVariable("nome") String nome) {
-        List<AlunoModel> alunos = service.buscarPorNome(nome);
+    public ResponseEntity<List<AutorModel>> buscarPorNome(@PathVariable("nome") String nome) {
+        List<AutorModel> autores = service.buscarPorNome(nome);
 
-        if (alunos.isEmpty()) {
-            // Retorna status 404 Not Found se não houver alunos
+        if (autores.isEmpty()) {
+            // Retorna status 404 Not Found se não houver autores
             return ResponseEntity.notFound().build();
         }
 
-        // Retorna status 200 OK com a lista de alunos
-        return ResponseEntity.ok(alunos);
+        // Retorna status 200 OK com a lista de autores
+        return ResponseEntity.ok(autores);
     }
 
     // CRIAR
@@ -88,8 +88,8 @@ public class AlunoController {
     // ou seja
     // quando alguém fizer um POST nessa URL, execute este método
     @PostMapping("/")
-    public AlunoModel criar(@RequestBody AlunoModel aluno) {
-        return service.salvar(aluno);
+    public AutorModel criar(@RequestBody AutorModel autor) {
+        return service.salvar(autor);
     }
 
     // ATUALIZAR
@@ -97,16 +97,16 @@ public class AlunoController {
     // quando alguém fizer um PUT nessa URL seguida de um número (ex: /alunos/id/1),
     // execute este método
     @PutMapping("/id/{id}")
-    public ResponseEntity<AlunoModel> atualizar(@PathVariable("id") Integer id, @RequestBody AlunoModel aluno) {
+    public ResponseEntity<AutorModel> atualizar(@PathVariable("id") Integer id, @RequestBody AutorModel autor) {
 
-        AlunoModel atualizado = service.atualizar(id, aluno);
+        AutorModel atualizado = service.atualizar(id, autor);
 
         if (atualizado == null) {
-            // Retorna status 404 Not Found se o aluno não for encontrado
+            // Retorna status 404 Not Found se o autor não for encontrado
             return ResponseEntity.notFound().build();
         }
 
-        // Retorna o aluno atualizado com status 200 OK
+        // Retorna o autor atualizado com status 200 OK
         return ResponseEntity.ok(atualizado);
     }
 

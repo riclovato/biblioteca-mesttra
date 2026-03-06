@@ -121,4 +121,11 @@ public class AlunoModel {
 	public void setBairro(String bairro) {
 		this.bairro = bairro;
 	}
+
+	@Override
+	public String toString() {	
+		return "id = " + id + ", nome = " + nome + ", cpf = " + cpf + ", telefone = " + telefone + 
+			   ", email = " + email + ", cep = " + cep + ", estado = " + estado + 
+			   ", cidade = " + cidade + ", endereco = " + endereco + ", bairro = " + bairro;
+	}
 }

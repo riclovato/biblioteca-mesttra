@@ -26,9 +26,9 @@ public class AlunoService {
         return alunoDAO.buscarPorId(id);
     }
 
-    // BUSCAR POR NOME
-    public AlunoModel buscarPorNome(String nome) {
-        return alunoDAO.buscarPorNome(nome);
+    // BUSCAR POR NOME (parcial)
+    public List<AlunoModel> buscarPorNome(String nomeParte) {
+        return alunoDAO.buscarPorNome(nomeParte);
     }
 
     // SALVAR
