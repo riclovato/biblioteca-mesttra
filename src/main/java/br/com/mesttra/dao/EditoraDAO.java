@@ -173,7 +173,7 @@ public class EditoraDAO {
     }
 
     // Método auxiliar para mapear ResultSet para EditoraModel
-    private EditoraModel mapearResultSetParaEditoraModel(ResultSet resultado) throws SQLException {
+    public static EditoraModel mapearResultSetParaEditoraModel(ResultSet resultado) throws SQLException {
         return new EditoraModel(
                 resultado.getInt("id"),
                 resultado.getString("editora"),

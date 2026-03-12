@@ -8,42 +8,45 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.time.LocalDate;
+
 import org.springframework.stereotype.Repository;
 
 import br.com.mesttra.config.DatabaseConnection;
-import br.com.mesttra.model.CategoriaModel;
+import br.com.mesttra.model.EmprestimoModel;
 
 @Repository
-public class CategoriaDAO {
+public class EmprestimoDAO {
 
     private final DatabaseConnection gerenciadorBancoDados;
 
-    public CategoriaDAO(DatabaseConnection gerenciadorBancoDados) {
+    public EmprestimoDAO(DatabaseConnection gerenciadorBancoDados) {
         this.gerenciadorBancoDados = gerenciadorBancoDados;
     }
 
-    public List<CategoriaModel> buscarTodos() {
-        List<CategoriaModel> categorias = new ArrayList<>();
-        String sql = "SELECT * FROM categoria";
+    // BUSCAR TODOS
+    public List<EmprestimoModel> buscarTodos() {
+        List<EmprestimoModel> emprestimos = new ArrayList<>();
+        String sql = "SELECT * FROM emprestimo";
 
         try (Connection conexao = gerenciadorBancoDados.obterConexao();
                 Statement instrucao = conexao.createStatement();
                 ResultSet resultado = instrucao.executeQuery(sql)) {
 
             while (resultado.next()) {
-                CategoriaModel categoria = mapearResultSetParaCategoriaModel(resultado);
-                categorias.add(categoria);
+                EmprestimoModel emprestimo = mapearResultSetParaEmprestimoModel(resultado);
+                emprestimos.add(emprestimo);
             }
         } catch (SQLException erro) {
             erro.printStackTrace();
         }
 
-        return categorias;
+        return emprestimos;
     }
 
     // BUSCAR POR ID
-    public CategoriaModel buscarPorId(Integer id) {
-        String sql = "SELECT * FROM categoria WHERE id = ?";
+    public EmprestimoModel buscarPorId(Integer id) {
+        String sql = "SELECT * FROM emprestimo WHERE id = ?";
 
         try (Connection conexao = gerenciadorBancoDados.obterConexao();
                 PreparedStatement instrucao = conexao.prepareStatement(sql)) {
@@ -51,7 +54,7 @@ public class CategoriaDAO {
             instrucao.setInt(1, id);
             try (ResultSet resultado = instrucao.executeQuery()) {
                 if (resultado.next()) {
-                    return mapearResultSetParaCategoriaModel(resultado);
+                    return mapearResultSetParaEmprestimoModel(resultado);
                 }
             }
         } catch (SQLException erro) {
@@ -62,10 +65,9 @@ public class CategoriaDAO {
     }
 
     // BUSCAR POR NOME
-
-    public List<CategoriaModel> buscarPorNome(String nomeParte) {
-        List<CategoriaModel> categorias = new ArrayList<>();
-        String sql = "SELECT * FROM categoria WHERE categoria LIKE ?";
+    public List<EmprestimoModel> buscarPorNome(String nomeParte) {
+        List<EmprestimoModel> emprestimos = new ArrayList<>();
+        String sql = "SELECT * FROM emprestimo WHERE nome LIKE ?";
 
         try (Connection conexao = gerenciadorBancoDados.obterConexao();
                 PreparedStatement instrucao = conexao.prepareStatement(sql)) {
@@ -73,60 +75,59 @@ public class CategoriaDAO {
             instrucao.setString(1, "%" + nomeParte + "%");
             try (ResultSet resultado = instrucao.executeQuery()) {
                 while (resultado.next()) {
-                    CategoriaModel categoria = mapearResultSetParaCategoriaModel(resultado);
-                    categorias.add(categoria);
+                    EmprestimoModel emprestimo = mapearResultSetParaEmprestimoModel(resultado);
+                    emprestimos.add(emprestimo);
                 }
             }
         } catch (SQLException erro) {
             erro.printStackTrace();
         }
 
-        return categorias;
+        return emprestimos;
     }
 
     // SALVAR (INSERT)
-    public CategoriaModel salvar(CategoriaModel categoria) {
-        String sql = "INSERT INTO categoria (categoria, descricao) " +
-                "VALUES (?, ?)";
+    public EmprestimoModel salvar(EmprestimoModel emprestimo) throws SQLException {
+        String sql = "INSERT INTO emprestimo (id_usuario, id_aluno, data_emprestimo, data_devolucao_prevista) " +
+                "VALUES (?, ?, ?, ?)";
 
         try (Connection conexao = gerenciadorBancoDados.obterConexao();
                 PreparedStatement instrucao = conexao.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            instrucao.setString(1, categoria.getCategoria());
-            instrucao.setString(2, categoria.getDescricao());
+            instrucao.setInt(1, emprestimo.getIdUsuario());
+            instrucao.setInt(2, emprestimo.getIdAluno());
+            instrucao.setDate(3, java.sql.Date.valueOf(emprestimo.getDataEmprestimo()));
+            instrucao.setDate(4, java.sql.Date.valueOf(emprestimo.getDataDevolucaoPrevista()));
 
             instrucao.executeUpdate();
 
             try (ResultSet chavesGeradas = instrucao.getGeneratedKeys()) {
                 if (chavesGeradas.next()) {
-                    categoria.setId(chavesGeradas.getInt(1));
+                    emprestimo.setId(chavesGeradas.getInt(1));
                 }
             }
 
-            return categoria;
-        } catch (SQLException erro) {
-            erro.printStackTrace();
-            return null;
+            return emprestimo;
         }
     }
 
     // ATUALIZAR (UPDATE)
-    public CategoriaModel atualizar(Integer id, CategoriaModel categoria) {
-        String sql = "UPDATE categoria SET categoria = ?, descricao = ? WHERE id = ?";
+    public EmprestimoModel atualizar(Integer id, EmprestimoModel emprestimo) {
+        String sql = "UPDATE emprestimo SET id_usuario = ?, id_aluno = ?, data_emprestimo = ?, data_devolucao_prevista = ? WHERE id = ?";
 
         try (Connection conexao = gerenciadorBancoDados.obterConexao();
                 PreparedStatement instrucao = conexao.prepareStatement(sql)) {
 
-            instrucao.setString(1, categoria.getCategoria());
-            instrucao.setString(2, categoria.getDescricao());
-            instrucao.setInt(3, id);
-            instrucao.setInt(7, id);
+            instrucao.setInt(1, emprestimo.getIdUsuario());
+            instrucao.setInt(2, emprestimo.getIdAluno());
+            instrucao.setDate(3, java.sql.Date.valueOf(emprestimo.getDataEmprestimo()));
+            instrucao.setDate(4, java.sql.Date.valueOf(emprestimo.getDataDevolucaoPrevista()));
 
             int linhasAfetadas = instrucao.executeUpdate();
 
             if (linhasAfetadas > 0) {
-                categoria.setId(id);
-                return categoria;
+                emprestimo.setId(id);
+                return emprestimo;
             }
 
         } catch (SQLException erro) {
@@ -138,7 +139,7 @@ public class CategoriaDAO {
 
     // DELETAR (DELETE)
     public boolean deletar(Integer id) {
-        String sql = "DELETE FROM autor WHERE id = ?";
+        String sql = "DELETE FROM emprestimo WHERE id = ?";
 
         try (Connection conexao = gerenciadorBancoDados.obterConexao();
                 PreparedStatement instrucao = conexao.prepareStatement(sql)) {
@@ -154,10 +155,14 @@ public class CategoriaDAO {
 
     }
 
-    public static CategoriaModel mapearResultSetParaCategoriaModel(ResultSet resultado) throws SQLException {
-        return new CategoriaModel(
+    // Método auxiliar para mapear ResultSet para EmprestimoModel
+    private EmprestimoModel mapearResultSetParaEmprestimoModel(ResultSet resultado) throws SQLException {
+        return new EmprestimoModel(
                 resultado.getInt("id"),
-                resultado.getString("categoria"),
-                resultado.getString("descricao"));
+                resultado.getInt("id_usuario"),
+                resultado.getInt("id_aluno"),
+                resultado.getDate("data_emprestimo").toLocalDate(),
+                resultado.getDate("data_devolucao_prevista").toLocalDate()
+        );
     }
 }

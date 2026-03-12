@@ -1,173 +1,223 @@
 package br.com.mesttra.dao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
-
+import br.com.mesttra.config.DatabaseConnection;
+import br.com.mesttra.excecoes.ExcecaoSQL;
+import br.com.mesttra.excecoes.ExcecaoNegocio;
+import br.com.mesttra.model.AutorModel;
 import org.springframework.stereotype.Repository;
 
-import br.com.mesttra.config.DatabaseConnection;
-import br.com.mesttra.model.AutorModel;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class AutorDAO {
-    private final DatabaseConnection gerenciadorBancoDados;
 
-    public AutorDAO(DatabaseConnection gerenciadorBancoDados) {
-        this.gerenciadorBancoDados = gerenciadorBancoDados;
-    }
+	private final DatabaseConnection gerenciadorBancoDados;
 
-    public List<AutorModel> buscarTodos() {
-        List<AutorModel> autores = new ArrayList<>();
-        String sql = "SELECT * FROM autor";
+	private final String sqlBase = """
+		SELECT	a.id as autor_id ,
+					autor as autor_nome,
+					pseudonimo as autor_pseudonimo ,
+					nacionalidade as autor_nacionalidade,
+					endereco_web as autor_endereco_web,
+					email as autor_email,
+					telefone as autor_telefone
+		FROM autor as a
+	""";
 
-        try (Connection conexao = gerenciadorBancoDados.obterConexao();
-                Statement instrucao = conexao.createStatement();
-                ResultSet resultado = instrucao.executeQuery(sql)) {
+	public AutorDAO(DatabaseConnection gerenciadorBancoDados) {
+		this.gerenciadorBancoDados = gerenciadorBancoDados;
+	}
+	
+	// ATUALIZAR (UPDATE)
+	public AutorModel atualizar(int id, AutorModel autor) {
+		String sql = """
+			UPDATE autor SET 
+				autor = ?, 
+				pseudonimo = ?, 
+				nacionalidade = ?, 
+				endereco_web = ?, 
+				email = ?, 
+				telefone = ? 
+			WHERE id = ?
+		""";
 
-            while (resultado.next()) {
-                AutorModel autor = mapearResultSetParaAutorModel(resultado);
-                autores.add(autor);
-            }
-        } catch (SQLException erro) {
-            erro.printStackTrace();
-        }
+		try (Connection conexao = gerenciadorBancoDados.obterConexao();
+				PreparedStatement comandoSQL = conexao.prepareStatement(sql)) {
 
-        return autores;
-    }
+			comandoSQL.setString(1, autor.getAutor());
+			comandoSQL.setString(2, autor.getPseudonimo());
+			comandoSQL.setString(3, autor.getNacionalidade());
+			comandoSQL.setString(4, autor.getEnderecoWeb());
+			comandoSQL.setString(5, autor.getEmail());
+			comandoSQL.setString(6, autor.getTelefone());
+			comandoSQL.setInt(7, id);
 
-    // BUSCAR POR ID
-    public AutorModel buscarPorId(Integer id) {
-        String sql = "SELECT * FROM autor WHERE id = ?";
+			int linhasAfetadas = comandoSQL.executeUpdate();
 
-        try (Connection conexao = gerenciadorBancoDados.obterConexao();
-                PreparedStatement instrucao = conexao.prepareStatement(sql)) {
+			if (linhasAfetadas > 0) {
+				autor.setId(id);
+				return autor;
+			}
 
-            instrucao.setInt(1, id);
-            try (ResultSet resultado = instrucao.executeQuery()) {
-                if (resultado.next()) {
-                    return mapearResultSetParaAutorModel(resultado);
-                }
-            }
-        } catch (SQLException erro) {
-            erro.printStackTrace();
-        }
+         throw new ExcecaoNegocio("Autor com id " + id + " não encontrado");
+		} catch (SQLException erro) {
+			throw new ExcecaoSQL("Erro ao atualizar aluno.", erro);
+		}
+	}
 
-        return null;
-    }
+	// BUSCAR TODOS
+	public List<AutorModel> buscarTodos()  {
+		List<AutorModel> autores = new ArrayList<>();
+		String sql = sqlBase;
 
-    // BUSCAR POR NOME
+		try (Connection conexao = gerenciadorBancoDados.obterConexao();
+				Statement comandoSQL = conexao.createStatement();
+				ResultSet resultado = comandoSQL.executeQuery(sql)) {
 
-    public List<AutorModel> buscarPorNome(String nomeParte) {
-        List<AutorModel> autores = new ArrayList<>();
-        String sql = "SELECT * FROM autor WHERE autor LIKE ?";
+			while (resultado.next()) {
+				Optional<AutorModel> autor = mapearResultSetParaAutorModel(resultado);
 
-        try (Connection conexao = gerenciadorBancoDados.obterConexao();
-                PreparedStatement instrucao = conexao.prepareStatement(sql)) {
+				if (autor.isPresent()) {
+					autores.add(autor.get());
+				}
+			}
+		} catch (SQLException erro) {
+			throw new ExcecaoSQL("Erro ao buscar autores.", erro);
+		}
 
-            instrucao.setString(1, "%" + nomeParte + "%");
-            try (ResultSet resultado = instrucao.executeQuery()) {
-                while (resultado.next()) {
-                    AutorModel autor = mapearResultSetParaAutorModel(resultado);
-                    autores.add(autor);
-                }
-            }
-        } catch (SQLException erro) {
-            erro.printStackTrace();
-        }
+		return autores;
+	}
 
-        return autores;
-    }
+	// BUSCAR POR ID
+	public Optional<AutorModel> buscarPorId(int id)  {
+		String sql = sqlBase + "WHERE a.id = ?";
 
-    // SALVAR (INSERT)
-    public AutorModel salvar(AutorModel autor) {
-        String sql = "INSERT INTO autor (autor, pseudonimo, nacionalidade, endereco_web, email, telefone) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+		try (Connection conexao = gerenciadorBancoDados.obterConexao();
+				PreparedStatement comandoSQL = conexao.prepareStatement(sql)) {
 
-        try (Connection conexao = gerenciadorBancoDados.obterConexao();
-                PreparedStatement instrucao = conexao.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+			comandoSQL.setInt(1, id);
 
-            instrucao.setString(1, autor.getAutor());
-            instrucao.setString(2, autor.getPseudonimo());
-            instrucao.setString(3, autor.getNacionalidade());
-            instrucao.setString(4, autor.getEnderecoWeb());
-            instrucao.setString(5, autor.getEmail());
-            instrucao.setString(6, autor.getTelefone());
+			try (ResultSet resultado = comandoSQL.executeQuery()) {
+				if (resultado.next()) {
+					Optional<AutorModel> autorModel = mapearResultSetParaAutorModel(resultado);
+					return autorModel;
+				}
+			}
+		} catch (SQLException erro) {
+			throw new ExcecaoSQL("Erro ao buscar autores.", erro);
+		}
 
-            instrucao.executeUpdate();
+		return Optional.empty();
+	}
+	
+	public Optional<List<AutorModel>> buscarPorAutor(String autorParte) {
+		List<AutorModel> autores = new ArrayList<>();
+		String sql = sqlBase + "WHERE a.autor LIKE ?";
 
-            try (ResultSet chavesGeradas = instrucao.getGeneratedKeys()) {
-                if (chavesGeradas.next()) {
-                    autor.setId(chavesGeradas.getInt(1));
-                }
-            }
+		try (Connection conexao = gerenciadorBancoDados.obterConexao();
+				PreparedStatement comandoSQL = conexao.prepareStatement(sql)) {
 
-            return autor;
-        } catch (SQLException erro) {
-            erro.printStackTrace();
-            return null;
-        }
-    }
+			String termoBusca = "%" + autorParte + "%";
+			comandoSQL.setString(1, termoBusca);
 
-    // ATUALIZAR (UPDATE)
-    public AutorModel atualizar(Integer id, AutorModel autor) {
-        String sql = "UPDATE autor SET autor = ?, pseudonimo = ?, nacionalidade = ?, endereco_web = ?, email = ?, telefone = ? WHERE id = ?";
+			try (ResultSet resultado = comandoSQL.executeQuery()) {
+				while (resultado.next()) {
+					Optional<AutorModel> autor = mapearResultSetParaAutorModel(resultado);
 
-        try (Connection conexao = gerenciadorBancoDados.obterConexao();
-                PreparedStatement instrucao = conexao.prepareStatement(sql)) {
+					if (autor.isPresent()) {
+						autores.add(autor.get());
+					}
+				}
+			}
+		}  catch (SQLException erro) {
+			throw new ExcecaoSQL("Erro ao buscar autores.", erro);
+		}
 
-            instrucao.setString(1, autor.getAutor());
-            instrucao.setString(2, autor.getPseudonimo());
-            instrucao.setString(3, autor.getNacionalidade());
-            instrucao.setString(4, autor.getEnderecoWeb());
-            instrucao.setString(5, autor.getEmail());
-            instrucao.setString(6, autor.getTelefone());
-            instrucao.setInt(7, id);
+		return (autores.isEmpty())? Optional.empty() : Optional.of(autores);
+	}
+	
+	// EXCLUIR (DELETE)
+	public boolean deletar(int id)  {
+		String sql = """
+			DELETE FROM autor WHERE id = ?
+		""";
 
-            int linhasAfetadas = instrucao.executeUpdate();
+		try (Connection conexao = gerenciadorBancoDados.obterConexao();
+				PreparedStatement comandoSQL = conexao.prepareStatement(sql)) {
 
-            if (linhasAfetadas > 0) {
-                autor.setId(id);
-                return autor;
-            }
+			comandoSQL.setInt(1, id);
 
-        } catch (SQLException erro) {
-            erro.printStackTrace();
-        }
+			int linhasAfetadas = comandoSQL.executeUpdate();
 
-        return null;
-    }
+			return (linhasAfetadas > 0);
+		} catch (SQLException erro) {
+			throw new ExcecaoSQL("Erro ao deletar autor.", erro);
+		}	
+	}
 
-    // DELETAR (DELETE)
-    public boolean deletar(Integer id) {
-        String sql = "DELETE FROM autor WHERE id = ?";
+	// SALVAR (INSERT)
+	public AutorModel inserir(AutorModel autor)  {
+		String sql = """
+			INSERT INTO autor (autor, pseudonimo, nacionalidade, endereco_web, email, telefone) 
+			VALUES (?, ?, ?, ?, ?, ?)
+		""";
 
-        try (Connection conexao = gerenciadorBancoDados.obterConexao();
-                PreparedStatement instrucao = conexao.prepareStatement(sql)) {
+		try (Connection conexao = gerenciadorBancoDados.obterConexao();
+				PreparedStatement comandoSQL = conexao.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            instrucao.setInt(1, id);
-            int linhasAfetadas = instrucao.executeUpdate();
+			comandoSQL.setString(1, autor.getAutor());
+			comandoSQL.setString(2, autor.getPseudonimo());
+			comandoSQL.setString(3, autor.getNacionalidade());
+			comandoSQL.setString(4, autor.getEnderecoWeb());
+			comandoSQL.setString(5, autor.getEmail());
+			comandoSQL.setString(6, autor.getTelefone());
 
-            return linhasAfetadas > 0;
+			comandoSQL.executeUpdate();
 
-        } catch (SQLException erro) {
-            throw new RuntimeException(erro);
-        }
+			try (ResultSet chavesGeradas = comandoSQL.getGeneratedKeys()) {
+				if (chavesGeradas.next()) {
+					int idGerado = chavesGeradas.getInt(1);
+					autor.setId(idGerado);
+	
+					return autor;
+				}
+			}
+			
+			throw new SQLException("Autor inserido, porém não foi possível obter o ID gerado.");
 
-    }
+		} catch (SQLException erro) {
+			throw new ExcecaoSQL("Erro ao inserir autor.", erro);
+		}
+	}
 
-    private AutorModel mapearResultSetParaAutorModel(ResultSet resultado) throws SQLException {
-        return new AutorModel(
-                resultado.getInt("id"),
-                resultado.getString("autor"),
-                resultado.getString("pseudonimo"),
-                resultado.getString("nacionalidade"),
-                resultado.getString("endereco_web"),
-                resultado.getString("email"),
-                resultado.getString("telefone"));
-    }
+	// Mapear ResultSet para AutorModel
+	public static Optional<AutorModel> mapearResultSetParaAutorModel(ResultSet resultado)  {
+		try {
+			int idAutor = resultado.getInt("autor_id");
+
+			if (resultado.wasNull()) {
+				// Retorna Optional vazio se o ID do autor for nulo (ou seja, não há autor associado)
+				return Optional.empty(); 
+			}
+			
+			AutorModel autor = new AutorModel();
+			
+			autor.setId(idAutor);
+			autor.setAutor(resultado.getString("autor_nome"));
+			autor.setPseudonimo(resultado.getString("autor_pseudonimo"));
+			autor.setNacionalidade(resultado.getString("autor_nacionalidade"));
+			autor.setEnderecoWeb(resultado.getString("autor_endereco_web"));
+			autor.setEmail(resultado.getString("autor_email"));
+			autor.setTelefone(resultado.getString("autor_telefone"));
+
+			// Retorna o autor mapeado dentro de um Optional
+			return Optional.of(autor); 
+		}	catch (SQLException erro) {
+			throw new ExcecaoSQL("Erro ao acessar dados do aluno.", erro);
+		}
+	}
+
 }
